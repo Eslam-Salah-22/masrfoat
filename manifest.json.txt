@@ -1,0 +1,15 @@
+{
+  "name": "مكتب الجرواني للمحاماة",
+  "short_name": "الجرواني",
+  "start_url": "index.html",
+  "display": "standalone",
+  "background_color": "#0a1628",
+  "theme_color": "#c9a84c",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/3503/3503714.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
