@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>منظومة إدارة عهدة ويومية المكتب القانوني - الإصدار النيوني</title>
+    <style>
+        :root {
+            /* نظام ألوان نيون مستقبلي داكن */
+            --bg-main: #0b0f19; 
+            --bg-card: #151c2c; 
+            --border: #1e293b;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            
+            /* ألوان النيون المشعة */
+            --neon-green: #10b981;
+            --neon-green-glow: rgba(16, 185, 129, 0.25);
+            --neon-pink: #f43f5e;
+            --neon-pink-glow: rgba(244, 63, 94, 0.25);
+            --neon-blue: #0ea5e9;
+            --neon-blue-glow: rgba(14, 165, 233, 0.25);
+            --neon-purple: #a855f7;
+            --neon-purple-glow: rgba(168, 85, 247, 0.25);
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            transition: background-color 0.3s ease;
+        }
+
+        header {
+            background-color: #0f172a;
+            color: white;
+            padding: 15px;
+            text-align: center;
+            border-bottom: 2px solid var(--neon-blue);
+            box-shadow: 0 4px 20px var(--neon-blue-glow);
+            position: relative;
+            overflow: hidden;
+        }
+        header::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--neon-blue), var(--neon-purple), transparent);
+        }
+        header h1 { 
+            margin: 0; 
+            font-size: 1.25rem; 
+            font-weight: 800; 
+            letter-spacing: 0.5px;
+            text-shadow: 0 0 10px rgba(14, 165, 233, 0.5);
+        }
+        header #live-clock { 
+            font-size: 0.8rem; 
+            opacity: 0.8; 
+            margin-top: 5px; 
+            color: #38bdf8;
+            font-weight: bold;
+        }
+
+        .layout-container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            padding: 15px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+        }
+
+        .stat-card {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 12px 8px;
+            border: 1px solid var(--border);
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+        }
+        .stat-card h3 { margin: 0; font-size: 0.75rem; color: var(--text-muted); font-weight: 600; }
+        .stat-card .amount { font-size: 1rem; font-weight: 800; margin-top: 6px; word-break: break-all; }
+        
+        /* تأثيرات توهج البطاقات التفاعلية الفريدة */
+        .stat-card.balance { 
+            border-top: 3px solid var(--neon-green); 
+        }
+        .stat-card.balance:hover {
+            box-shadow: 0 0 15px var(--neon-green-glow);
+            border-color: var(--neon-green);
+            transform: translateY(-2px);
+        }
+        .stat-card.legal { 
+            border-top: 3px solid var(--neon-pink); 
+        }
+        .stat-card.legal:hover {
+            box-shadow: 0 0 15px var(--neon-pink-glow);
+            border-color: var(--neon-pink);
+            transform: translateY(-2px);
+        }
+        .stat-card.admin { 
+            border-top: 3px solid var(--neon-blue); 
+        }
+        .stat-card.admin:hover {
+            box-shadow: 0 0 15px var(--neon-blue-glow);
+            border-color: var(--neon-blue);
+            transform: translateY(-2px);
+        }
+
+        .tabs-container {
+            display: flex;
+            background: #1e293b;
+            border-radius: 10px;
+            padding: 4px;
+            gap: 4px;
+            border: 1px solid #334155;
+        }
+        .tab-btn {
+            flex: 1;
+            padding: 10px 5px;
+            font-size: 0.85rem;
+            font-weight: bold;
+            background: none;
+            color: var(--text-muted);
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.25s ease;
+        }
+        .tab-btn.active {
+            background: var(--bg-card);
+            color: var(--text-main);
+            box-shadow: 0 0 10px rgba(14, 165, 233, 0.2);
+            border: 1px solid rgba(14, 165, 233, 0.3);
+        }
+
+        .card {
+            background: var(--bg-card);
+            border-radius: 14px;
+            border: 1px solid var(--border);
+            padding: 18px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+        }
+
+        .form-section { display: none; }
+        .form-section.active { display: block; }
+
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 6px; font-weight: 700; font-size: 0.8rem; color: #38bdf8; }
+        
+        /* حقول إدخال متفاعلة ونيونية */
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%; 
+            padding: 11px; 
+            border: 1px solid var(--border); 
+            border-radius: 8px; 
+            box-sizing: border-box; 
+            font-family: inherit; 
+            font-size: 0.9rem; 
+            background-color: #0f172a;
+            color: var(--text-main);
+            transition: all 0.3s ease;
+        }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+            outline: none;
+            border-color: var(--neon-blue);
+            box-shadow: 0 0 10px var(--neon-blue-glow);
+            background-color: #1e293b;
+        }
+
+        .items-container {
+            background: #0f172a;
+            padding: 10px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            border: 1px dashed #334155;
+        }
+        
+        .item-row {
+            background: var(--bg-card);
+            padding: 12px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            border: 1px solid var(--border);
+            animation: fadeIn 0.3s ease;
+        }
+        
+        .item-row-inputs {
+            display: grid;
+            grid-template-columns: 1fr 1.2fr;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+        
+        .item-desc-textarea {
+            width: 100%; 
+            height: 60px; 
+            padding: 8px; 
+            border: 1px solid var(--border); 
+            border-radius: 6px; 
+            font-family: inherit; 
+            font-size: 0.85rem; 
+            resize: vertical; 
+            box-sizing: border-box; 
+            background-color: #0f172a; 
+            color: var(--text-main);
+            margin-bottom: 6px;
+            transition: all 0.3s ease;
+        }
+        .item-desc-textarea:focus {
+            outline: none;
+            border-color: var(--neon-blue);
+            box-shadow: 0 0 8px var(--neon-blue-glow);
+        }
+
+        button {
+            padding: 11px 14px; 
+            border: none; 
+            border-radius: 8px; 
+            font-size: 0.85rem; 
+            font-weight: 700; 
+            cursor: pointer; 
+            display: inline-flex; 
+            align-items: center; 
+            justify-content: center; 
+            gap: 5px;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        button:active {
+            transform: scale(0.96);
+        }
+
+        .btn-primary { 
+            background: linear-gradient(135deg, #1e293b, var(--neon-blue)); 
+            color: white; 
+            width: 100%; 
+            padding: 13px; 
+            font-size: 0.95rem; 
+            box-shadow: 0 4px 12px var(--neon-blue-glow);
+        }
+        .btn-primary:hover {
+            box-shadow: 0 0 20px var(--neon-blue-glow);
+            filter: brightness(1.1);
+        }
+
+        .btn-add-item { 
+            background: #0ea5e9; 
+            color: white; 
+            padding: 6px 12px; 
+            font-size: 0.75rem; 
+            border-radius: 6px; 
+        }
+        .btn-add-item:hover {
+            box-shadow: 0 0 10px rgba(14, 165, 233, 0.4);
+        }
+
+        .btn-danger-icon { 
+            background: rgba(244, 63, 94, 0.15); 
+            color: #fb7185; 
+            font-size: 0.8rem; 
+            padding: 8px; 
+            border-radius: 6px; 
+            width: 100%; 
+            border: 1px solid rgba(244, 63, 94, 0.2);
+        }
+        .btn-danger-icon:hover {
+            background: var(--neon-pink);
+            color: white;
+            box-shadow: 0 0 10px var(--neon-pink-glow);
+        }
+
+        .toolbar {
+            background: var(--bg-card); 
+            border-radius: 14px; 
+            border: 1px solid var(--border); 
+            padding: 15px; 
+            display: flex; 
+            flex-direction: column; 
+            gap: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+        .filters { display: flex; flex-direction: column; gap: 10px; }
+        .filters .filter-item { display: flex; flex-direction: column; gap: 4px; font-size: 0.8rem; font-weight: bold; color: #38bdf8; }
+        .filters select, .filters input { 
+            padding: 10px; 
+            border: 1px solid var(--border); 
+            border-radius: 8px; 
+            font-size: 0.85rem; 
+            background-color: #0f172a;
+            color: var(--text-main);
+            transition: all 0.3s ease;
+        }
+        .filters select:focus, .filters input:focus {
+            outline: none;
+            border-color: var(--neon-blue);
+            box-shadow: 0 0 10px var(--neon-blue-glow);
+        }
+
+        .action-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+        .table-wrapper {
+            background: var(--bg-card); 
+            border-radius: 14px; 
+            border: 1px solid var(--border); 
+            overflow-x: auto; 
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+        }
+
+        table { width: 100%; border-collapse: collapse; text-align: right; min-width: 650px; }
+        th { 
+            background-color: #0f172a; 
+            color: #38bdf8; 
+            font-weight: 700; 
+            padding: 12px 10px; 
+            font-size: 0.8rem; 
+            border-bottom: 2px solid var(--border); 
+        }
+        td { padding: 12px 10px; border-bottom: 1px solid var(--border); font-size: 0.85rem; vertical-align: top; }
+
+        /* الجداول الداخلية المعشعشة بتنسيق نيون مميز */
+        .nested-table { width: 100%; margin-top: 6px; background: #0f172a; border-radius: 8px; border: 1px solid #1e293b; }
+        .nested-table th { background: #1e293b; padding: 6px 8px; font-size: 0.75rem; color: #94a3b8; }
+        .nested-table td { padding: 6px 8px; font-size: 0.8rem; border-bottom: 1px solid #1e293b; white-space: pre-wrap; color: #cbd5e1; }
+
+        .badge { padding: 4px 8px; border-radius: 6px; font-size: 0.7rem; font-weight: bold; color: white; display: inline-block; text-shadow: 0 1px 2px rgba(0,0,0,0.5); }
+        .badge.out { background-color: var(--neon-pink); box-shadow: 0 0 8px var(--neon-pink-glow); }
+        .badge.in { background-color: var(--neon-green); box-shadow: 0 0 8px var(--neon-green-glow); }
+        .badge.vault { background-color: var(--neon-purple); box-shadow: 0 0 8px var(--neon-purple-glow); }
+        
+        .btn-delete-main { background: none; color: #f43f5e; font-size: 1.1rem; padding: 2px; transition: transform 0.2s; }
+        .btn-delete-main:hover { transform: scale(1.2); color: #ff0055; text-shadow: 0 0 8px rgba(255, 0, 85, 0.6); }
+
+        /* تأثيرات حركة الظهور للبنود والمكونات */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @media (min-width: 1024px) {
+            .layout-container { display: grid; grid-template-columns: 420px 1fr; padding: 25px; max-width: 1600px; margin: 0 auto; gap: 25px; }
+            .stats-grid { gap: 12px; } 
+            .stat-card { padding: 15px 10px; } 
+            .stat-card .amount { font-size: 1.35rem; }
+            header h1 { font-size: 1.5rem; } 
+            header #live-clock { font-size: 0.9rem; }
+        }
+
+        /* 🖨️ هندسة الطباعة الاحترافية لعدم إهدار الحبر والحفاظ على المظهر الرسمي والألوان البيضاء */
+        @media print {
+            body { background: white !important; color: black !important; padding: 0; margin: 0; }
+            header, .sidebar, .toolbar, .btn-delete-main, th:last-child, td:last-child {
+                display: none !important; 
+            }
+            .layout-container { display:block; padding: 0; margin: 0; width: 100%; }
+            .main-content { width: 100%; }
+            .table-wrapper { border: none; box-shadow: none; overflow: visible; }
+            table { width: 100%; min-width: 100%; page-break-inside: auto; }
+            tr { page-break-inside: avoid; page-break-after: auto; }
+            th { background-color: #edf2f7 !important; color: black !important; border-bottom: 2px solid black !important; }
+            td { border-bottom: 1px solid #cbd5e1 !important; color: black !important; }
+            .nested-table { background: white !important; border: 1px solid #cbd5e1 !important; }
+            .nested-table th { background: #f7fafc !important; color: black !important; }
+            .nested-table td { border-bottom: 1px solid #edf2f7 !important; color: black !important; }
+            .badge { background: none !important; color: black !important; border: 1px solid black !important; box-shadow: none !important; text-shadow: none !important; }
+            
+            body::before {
+                content: "تقرير مصاريف وحركات اليومية المالي رسمي";
+                display: block;
+                text-align: center;
+                font-size: 1.4rem;
+                font-weight: bold;
+                margin-bottom: 20px;
+                border-bottom: 3px double #000;
+                padding-bottom: 10px;
+                color: black;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>نظام يومية العهدة والأرشيف الذكي - مكتب المحاماة</h1>
+    <div id="live-clock"></div>
+</header>
+
+<div class="layout-container">
+    <div class="sidebar">
+        <div class="stats-grid">
+            <div class="stat-card balance">
+                <h3>العهدة حالياً</h3>
+                <div class="amount" id="net-balance" style="color: var(--neon-green);">0.00</div>
+            </div>
+            <div class="stat-card legal">
+                <h3>مصاريف قضايا</h3>
+                <div class="amount" id="legal-expenses" style="color: var(--neon-pink);">0.00</div>
+            </div>
+            <div class="stat-card admin">
+                <h3>إدارية ومكتب</h3>
+                <div class="amount" id="admin-expenses" style="color: var(--neon-blue);">0.00</div>
+            </div>
+        </div>
+
+        <div class="card" style="padding: 12px; margin-top: 15px;">
+            <div class="tabs-container">
+                <button class="tab-btn active" onclick="switchTab('daily-tab')">📋 مصاريف وتحركات يومية</button>
+                <button class="tab-btn" onclick="switchTab('vault-tab')">💰 حركة عهدة مباشرة</button>
+            </div>
+
+            <div id="daily-tab" class="form-section active" style="margin-top: 15px;">
+                <form id="daily-form">
+                    <div class="form-group">
+                        <label>تاريخ اليومية</label>
+                        <input type="date" id="daily-date" required>
+                    </div>
+                    <div class="form-group">
+                        <label>الجهة / مكان العمل اليومي</label>
+                        <input type="text" id="daily-destination" placeholder="مثال: محكمة شمال، الشهر العقاري..." required>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin: 15px 0 8px 0;">
+                        <label style="font-weight:700; font-size:0.8rem; color:#38bdf8;">تفاصيل بنود الصرف:</label>
+                        <button type="button" class="btn-add-item" onclick="addItemRow()">➕ إضافة بند صرف</button>
+                    </div>
+                    <div id="items-container" class="items-container"></div>
+                    <button type="submit" class="btn-primary">💾 ترحيل وحفظ في اليومية</button>
+                </form>
+            </div>
+
+            <div id="vault-tab" class="form-section" style="margin-top: 15px;">
+                <form id="vault-form">
+                    <div class="form-group">
+                        <label>تاريخ حركة العهدة</label>
+                        <input type="date" id="vault-date" required>
+                    </div>
+                    <div class="form-group">
+                        <label>نوع العملية المباشرة</label>
+                        <select id="vault-action-type" required>
+                            <option value="in">إيداع (تغذية العهدة / زيادة الرصيد)</option>
+                            <option value="vault-out">سحب مباشر (عجز، سحب شخصي، إرجاع عهدة)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>المبلغ النقدي (ج.م)</label>
+                        <input type="number" id="vault-amount" min="0.1" step="0.01" placeholder="0.00" required>
+                    </div>
+                    <div class="form-group">
+                        <label>البيان والسبب التفصيلي</label>
+                        <textarea id="vault-description" rows="3" placeholder="اكتب تفاصيل التغذية أو السحب..." required style="height: 80px;"></textarea>
+                    </div>
+                    <button type="submit" class="btn-primary" style="background: linear-gradient(135deg, #1e293b, var(--neon-purple)); box-shadow: 0 4px 12px var(--neon-purple-glow);">⚡ حفظ حركة العهدة النقدي</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <div class="toolbar">
+            <div class="filters">
+                <div class="filter-item">
+                    <label>الأرشيف الشهري:</label>
+                    <select id="month-filter" onchange="renderTable()"></select>
+                </div>
+                <div class="filter-item">
+                    <label>البحث السريع (اكتب تاريخ محدد مثل 2026-07-13 لفلترة اليوم):</label>
+                    <input type="text" id="search-filter" placeholder="اكتب التاريخ، الجهة، أو رقم القضية..." oninput="renderTable()">
+                </div>
+            </div>
+            
+            <div class="action-buttons">
+                <button onclick="exportToCSV()" style="background: #2563eb; color:white; box-shadow: 0 4px 10px rgba(37, 99, 235, 0.2);">📥 تصدير Excel</button>
+                <button onclick="window.print()" style="background: #059669; color:white; box-shadow: 0 4px 10px rgba(5, 150, 105, 0.2);">🖨️ طباعة تقرير اليوم الحالي</button>
+            </div>
+        </div>
+
+        <div class="table-wrapper" style="margin-top: 15px;">
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width: 85px;">التاريخ</th>
+                        <th style="width: 120px;">الجهة / الحركة</th>
+                        <th style="width: 80px;">النوع</th>
+                        <th>التفاصيل والبنود المقترنة</th>
+                        <th style="width: 90px;">الإجمالي</th>
+                        <th style="width: 35px;">حذف</th>
+                    </tr>
+                </thead>
+                <tbody id="journal-tbody"></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+    let journalEntries = JSON.parse(localStorage.getItem('law_journal_v3')) || [];
+    const dailyCategories = ['رسوم محكمة', 'أنتقالات ومحضرين', 'تصوير مستندات', 'مصاريف مكتب ونوافذ', 'ضيافة وفواتير', 'رواتب ومكافآت', 'أخرى'];
+
+    document.getElementById('daily-date').valueAsDate = new Date();
+    document.getElementById('vault-date').valueAsDate = new Date();
+    document.getElementById('live-clock').innerText = "تاريخ اليوم: " + new Date().toLocaleDateString('ar-EG');
+
+    function switchTab(tabId) {
+        document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+        document.querySelectorAll('.form-section').forEach(sec => sec.classList.remove('active'));
+        event.target.classList.add('active');
+        document.getElementById(tabId).classList.add('active');
+    }
+
+    function addItemRow(amount = '', cat = '', desc = '') {
+        const container = document.getElementById('items-container');
+        const rowId = 'row_' + Date.now() + Math.random().toString(36).substr(2, 5);
+        let catOptions = dailyCategories.map(c => `<option value="${c}" ${c === cat ? 'selected' : ''}>${c}</option>`).join('');
+
+        const rowHtml = `
+            <div class="item-row" id="${rowId}">
+                <div class="item-row-inputs">
+                    <input type="number" class="item-amount" placeholder="المبلغ" min="0.1" step="0.01" value="${amount}" required>
+                    <select class="item-category" required>${catOptions}</select>
+                </div>
+                <textarea class="item-desc-textarea" placeholder="اكتب تفاصيل هذا البند..." required>${desc}</textarea>
+                <button type="button" class="btn-danger-icon" onclick="removeItemRow('${rowId}')">🗑️ حذف البند</button>
+            </div>
+        `;
+        container.insertAdjacentHTML('beforeend', rowHtml);
+    }
+
+    function removeItemRow(id) {
+        if(document.querySelectorAll('#items-container .item-row').length > 1) {
+            document.getElementById(id).remove();
+        } else {
+            alert('يجب إضافة بند واحد على الأقل للمصاريف اليومية!');
+        }
+    }
+
+    document.getElementById('daily-form').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const date = document.getElementById('daily-date').value;
+        const destination = document.getElementById('daily-destination').value;
+        const rows = document.querySelectorAll('#items-container .item-row');
+        let items = [];
+        let totalAmount = 0;
+
+        rows.forEach(row => {
+            const amt = parseFloat(row.querySelector('.item-amount').value);
+            totalAmount += amt;
+            items.push({ amount: amt, category: row.querySelector('.item-category').value, description: row.querySelector('.item-desc-textarea').value });
+        });
+
+        journalEntries.push({ id: Date.now(), date: date, destination: destination, type: 'out', items: items, total: totalAmount, isVaultAction: false });
+        saveAndRefresh();
+        document.getElementById('daily-destination').value = '';
+        document.getElementById('items-container').innerHTML = '';
+        addItemRow();
+    });
+
+    document.getElementById('vault-form').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const date = document.getElementById('vault-date').value;
+        const actionType = document.getElementById('vault-action-type').value;
+        const amount = parseFloat(document.getElementById('vault-amount').value);
+        const desc = document.getElementById('vault-description').value;
+
+        journalEntries.push({
+            id: Date.now(), date: date,
+            destination: actionType === 'in' ? 'تغذية خزينة/عهدة' : 'سحب/عجز عهدة مباشر',
+            type: actionType === 'in' ? 'in' : 'out',
+            items: [{ amount: amount, category: actionType === 'in' ? 'تغذية عهدة' : 'سحب مباشر', description: desc }],
+            total: amount, isVaultAction: true
+        });
+        saveAndRefresh();
+        document.getElementById('vault-amount').value = '';
+        document.getElementById('vault-description').value = '';
+    });
+
+    function deleteEntry(id) {
+        if(confirm('هل أنت متأكد من حذف هذه المعاملة بالكامل؟')) {
+            journalEntries = journalEntries.filter(e => e.id !== id);
+            saveAndRefresh();
+        }
+    }
+
+    function saveAndRefresh() {
+        journalEntries.sort((a,b) => new Date(b.date) - new Date(a.date));
+        localStorage.setItem('law_journal_v3', JSON.stringify(journalEntries));
+        calculateFinances();
+        buildMonthFilter();
+        renderTable();
+    }
+
+    function calculateFinances() {
+        let netBalance = 0, legalExp = 0, adminExp = 0;
+        journalEntries.forEach(entry => {
+            if(entry.type === 'in') { netBalance += entry.total; } 
+            else {
+                netBalance -= entry.total;
+                if(!entry.isVaultAction || (entry.isVaultAction && entry.destination !== 'سحب/عجز عهدة مباشر')) {
+                    entry.items.forEach(item => {
+                        if(['رسوم محكمة', 'أنتقالات ومحضرين', 'تصوير مستندات'].includes(item.category)) { legalExp += item.amount; } 
+                        else if(item.category !== 'سحب مباشر') { adminExp += item.amount; }
+                    });
+                }
+            }
+        });
+        document.getElementById('net-balance').innerText = netBalance.toFixed(2) + ' ج.م';
+        document.getElementById('legal-expenses').innerText = legalExp.toFixed(2) + ' ج.م';
+        document.getElementById('admin-expenses').innerText = adminExp.toFixed(2) + ' ج.م';
+    }
+
+    function buildMonthFilter() {
+        const filter = document.getElementById('month-filter');
+        const currentSel = filter.value;
+        let months = journalEntries.map(e => e.date.substring(0, 7));
+        months = [...new Set(months)].sort().reverse();
+        filter.innerHTML = '<option value="all">كل الأرشيف التاريخي</option>';
+        months.forEach(m => { filter.innerHTML += `<option value="${m}">أرشيف شهر ${m}</option>`; });
+        if(currentSel) filter.value = currentSel;
+    }
+
+    function renderTable() {
+        const tbody = document.getElementById('journal-tbody');
+        tbody.innerHTML = '';
+        const monthVal = document.getElementById('month-filter').value;
+        const searchVal = document.getElementById('search-filter').value.toLowerCase();
+
+        journalEntries.forEach(entry => {
+            const matchMonth = (monthVal === 'all' || entry.date.startsWith(monthVal));
+            const matchSearch = (entry.date.includes(searchVal) || 
+                                 entry.destination.toLowerCase().includes(searchVal) || 
+                                 entry.items.some(i => i.description.toLowerCase().includes(searchVal)));
+
+            if(matchMonth && matchSearch) {
+                let itemsHtml = '';
+                if(entry.isVaultAction) {
+                    itemsHtml = `<div style="padding:8px; background:rgba(168, 85, 247, 0.1); border: 1px solid rgba(168, 85, 247, 0.2); border-radius:6px; font-size:0.8rem; color:#d8b4fe;">${entry.items[0].description}</div>`;
+                } else {
+                    itemsHtml = `<table class="nested-table">
+                                    <thead><tr><th style="width:100px;">التصنيف</th><th style="width:65px;">المبلغ</th><th>البيان التفصيلي للإجراء والقضية</th></tr></thead>
+                                    <tbody>`;
+                    entry.items.forEach(i => {
+                        itemsHtml += `<tr><td><strong style="color: #38bdf8;">${i.category}</strong></td><td style="color:var(--neon-pink); font-weight:700;">${i.amount.toFixed(2)}</td><td>${i.description.replace(/\n/g, '<br>')}</td></tr>`;
+                    });
+                    itemsHtml += `</tbody></table>`;
+                }
+
+                let badgeClass = entry.type === 'in' ? 'in' : 'out';
+                let typeText = entry.type === 'in' ? 'تغذية (+)' : 'صرف مصاريف';
+                if(entry.isVaultAction && entry.type === 'out') { badgeClass = 'vault'; typeText = 'سحب عهدة (-)'; }
+
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td><strong style="color:#38bdf8;">${entry.date}</strong></td>
+                    <td><span style="color:var(--text-main); font-weight:700;">${entry.destination}</span></td>
+                    <td><span class="badge ${badgeClass}">${typeText}</span></td>
+                    <td>${itemsHtml}</td>
+                    <td style="font-size:0.95rem; font-weight:800; color:#38bdf8; white-space:nowrap;">${entry.total.toFixed(2)} ج.م</td>
+                    <td><button class="btn-delete-main" onclick="deleteEntry(${entry.id})">🗑️</button></td>
+                `;
+                tbody.appendChild(tr);
+            }
+        });
+    }
+
+    function exportToCSV() {
+        if(journalEntries.length === 0) return alert('الأرشيف فارغ حالياً!');
+        let csv = "data:text/csv;charset=utf-8,\uFEFFالتاريخ,الجهة الحركة,النوع,التصنيف,المبلغ,البيان التفصيلي\n";
+        journalEntries.forEach(e => {
+            e.items.forEach(i => { csv += `"${e.date}","${e.destination}","${e.type==='in'?'إيداع':'صرف'}","${i.category}","${i.amount}","${i.description.replace(/"/g, '""')}"\n`; });
+        });
+        const dl = document.createElement('a'); dl.href = encodeURI(csv); dl.download = `أرشيف_يومية_المكتب_${new Date().toISOString().slice(0,10)}.csv`; dl.click();
+    }
+
+    addItemRow();
+    saveAndRefresh();
+</script>
+</body>
+</html>
